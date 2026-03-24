@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+      - run: pnpm build --filter=@adi/shared
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+      - run: pnpm lint
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+      - run: pnpm typecheck
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+      - run: pnpm build --filter=@adi/shared
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+      - run: pnpm test
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+      - run: pnpm build
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+  # TODO: Add e2e tests with Playwright once UI is ready
+  # e2e:
+  #   name: E2E
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     ...
