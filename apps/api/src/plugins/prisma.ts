@@ -9,7 +9,7 @@ declare module 'fastify' {
 
 export const prismaPlugin: FastifyPluginAsync = async (server: FastifyInstance) => {
   const prisma = new PrismaClient({
-    log: server.env?.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
 
   await prisma.$connect()

@@ -1,10 +1,16 @@
 import { Type } from '@sinclair/typebox'
 import { FastifyPluginAsync } from 'fastify'
+import type { ModelProvider } from '@prisma/client'
+import { requireAuth } from '../plugins/auth.js'
 
 const agentRoutes: FastifyPluginAsync = async (server) => {
+  const authPreHandler = requireAuth(server)
+
+  // POST / — Create agent (auth + org membership required)
   server.post(
     '/',
     {
+      preHandler: authPreHandler,
       schema: {
         description: 'Create a new agent',
         tags: ['agents'],
@@ -32,14 +38,14 @@ const agentRoutes: FastifyPluginAsync = async (server) => {
     async (request, reply) => {
       const { orgId } = request.params as { orgId: string }
       const data = request.body as Record<string, unknown>
-      // TODO: Enforce orgId membership check from Clerk JWT
+
       const agent = await server.prisma.agent.create({
         data: {
           organizationId: orgId,
-          createdById: 'user_placeholder', // TODO: from Clerk JWT
+          createdById: request.clerkUserId,
           name: data.name as string,
           description: data.description as string | null,
-          modelProvider: (data.modelProvider as string).toUpperCase(),
+          modelProvider: (data.modelProvider as string).toUpperCase() as ModelProvider,
           modelName: data.modelName as string,
           systemPrompt: data.systemPrompt as string | null,
           temperature: (data.temperature as number) ?? 0.7,
@@ -50,9 +56,11 @@ const agentRoutes: FastifyPluginAsync = async (server) => {
     }
   )
 
+  // GET / — List agents (auth + org membership required)
   server.get(
     '/',
     {
+      preHandler: authPreHandler,
       schema: {
         description: 'List agents in organization',
         tags: ['agents'],
@@ -78,9 +86,11 @@ const agentRoutes: FastifyPluginAsync = async (server) => {
     }
   )
 
+  // GET /:agentId — Get agent by ID (auth + org membership required)
   server.get(
     '/:agentId',
     {
+      preHandler: authPreHandler,
       schema: {
         description: 'Get agent by ID',
         tags: ['agents'],
@@ -97,9 +107,11 @@ const agentRoutes: FastifyPluginAsync = async (server) => {
     }
   )
 
+  // PATCH /:agentId — Update agent (auth + org membership required)
   server.patch(
     '/:agentId',
     {
+      preHandler: authPreHandler,
       schema: {
         description: 'Update agent',
         tags: ['agents'],
@@ -127,9 +139,11 @@ const agentRoutes: FastifyPluginAsync = async (server) => {
     }
   )
 
+  // DELETE /:agentId — Soft-delete agent (auth + org membership required)
   server.delete(
     '/:agentId',
     {
+      preHandler: authPreHandler,
       schema: {
         description: 'Soft-delete agent',
         tags: ['agents'],
@@ -147,4 +161,5 @@ const agentRoutes: FastifyPluginAsync = async (server) => {
   )
 }
 
+export { agentRoutes }
 export default agentRoutes

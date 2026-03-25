@@ -5,12 +5,13 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { agentRoutes } from './routes/agents.js'
-import { workflowRoutes } from './routes/workflows.js'
-import { executionRoutes } from './routes/executions.js'
-import { orgRoutes } from './routes/organizations.js'
+import workflowRoutes from './routes/workflows.js'
+import executionRoutes from './routes/executions.js'
+import orgRoutes from './routes/organizations.js'
 import { meRoutes } from './routes/me.js'
 import { errorHandler } from './plugins/error-handler.js'
 import { prismaPlugin } from './plugins/prisma.js'
+import { clerkFastifyPlugin } from './plugins/clerk.js'
 
 const server = Fastify({
   logger: {
@@ -27,6 +28,10 @@ await server.register(helmet)
 await server.register(swagger, { openapi: { info: { title: 'Agent Dragon Inn API', version: '1.0.0' } } })
 await server.register(swaggerUi, { routePrefix: '/docs' })
 await server.register(prismaPlugin)
+
+// Clerk auth plugin — must be registered before routes that use getAuth/requireAuth
+await server.register(clerkFastifyPlugin)
+
 await server.setErrorHandler(errorHandler)
 
 // Routes
